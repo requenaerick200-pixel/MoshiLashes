@@ -50,7 +50,6 @@ export default function ReabastecerModal({ producto, onConfirmar, onCerrar }) {
           type="number"
           inputMode="numeric"
           min="1"
-          autoFocus
           value={cantidad}
           onChange={(e) => setCantidad(e.target.value)}
           placeholder="Ej. 20"

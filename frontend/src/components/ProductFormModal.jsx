@@ -21,7 +21,7 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-const manejarFoto = (e) => {
+  const manejarFoto = (e) => {
     const archivo = e.target.files?.[0];
     if (!archivo) return;
 
@@ -110,13 +110,13 @@ const manejarFoto = (e) => {
       {error && <div className="aviso-error">{error}</div>}
 
       <div className="subida-foto">
-        {imagenUrl ? (
-          <img className="preview" src={imagenUrl} alt="Vista previa" />
-        ) : (
-          <div className="preview miniatura-vacia" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            📷
-          </div>
-        )}
+        <div className="caja-preview">
+          {imagenUrl ? (
+            <img className="preview" src={imagenUrl} alt="Vista previa" />
+          ) : (
+            <span className="icono-camara-vacio">📷</span>
+          )}
+        </div>
         <label className="btn btn-secundario">
           {imagenUrl ? 'Cambiar foto' : 'Agregar foto'}
           <input type="file" accept="image/*" onChange={manejarFoto} style={{ display: 'none' }} />

@@ -53,7 +53,6 @@ export default function GoalModal({ mes, montoActual, onGuardar, onCerrar }) {
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
           placeholder="Ej. 3000"
-          autoFocus
         />
       </div>
     </Modal>

@@ -11,7 +11,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <main className="contenido">
+      <main className="app-contenido">
         {tabActiva === 'catalogo' ? <CatalogoTab /> : <VentasTab />}
       </main>
       <BottomTabBar tabActiva={tabActiva} onCambiarTab={setTabActiva} />

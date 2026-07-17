@@ -13,7 +13,7 @@ const metasRoutes = require('./routes/metas');
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // permite leer JSON en req.body
+app.use(express.json({ limit: '10mb' })); // permite leer JSON en req.body (10mb para fotos en base64)
 
 // Ruta de salud, útil para probar que el servidor responde
 app.get('/api/health', (req, res) => {

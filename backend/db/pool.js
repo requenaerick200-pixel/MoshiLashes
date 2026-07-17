@@ -15,20 +15,32 @@ const { Pool, types } = require('pg');
 // como string "YYYY-MM-DD".
 types.setTypeParser(1082, (val) => val);
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  ssl: process.env.DB_HOST && process.env.DB_HOST !== 'localhost'
-    ? { rejectUnauthorized: false }
-    : false,
-});
+// Railway (y otros proveedores en la nube) suelen dar una sola variable
+// DATABASE_URL con todo junto, en vez de host/usuario/password sueltos.
+// Soportamos ambos formatos: si existe DATABASE_URL la usamos; si no,
+// caemos a las variables sueltas (para desarrollo local).
+const usaConnectionString = !!process.env.DATABASE_URL;
+
+const pool = usaConnectionString
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    })
+  : new Pool({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl: process.env.DB_HOST && process.env.DB_HOST !== 'localhost'
+        ? { rejectUnauthorized: false }
+        : false,
+    });
+
 // Pequeña prueba de conexión al arrancar el servidor.
 // Si falla, mostramos un mensaje claro en vez de un error críptico.
 pool.query('SELECT NOW()')
-  .then(() => console.log('✅ Conectado a PostgreSQL (base de datos: ' + process.env.DB_NAME + ')'))
+  .then(() => console.log('✅ Conectado a PostgreSQL'))
   .catch((err) => {
     console.error('❌ No se pudo conectar a PostgreSQL:', err.message);
   });

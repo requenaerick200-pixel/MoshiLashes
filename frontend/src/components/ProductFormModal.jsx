@@ -21,11 +21,38 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  const manejarFoto = (e) => {
+const manejarFoto = (e) => {
     const archivo = e.target.files?.[0];
     if (!archivo) return;
+
+    // Las fotos de galería del celular pueden pesar varios MB. Las
+    // redimensionamos y comprimimos en el navegador antes de convertirlas
+    // a base64, para que quepan cómodamente en la petición al backend.
     const lector = new FileReader();
-    lector.onload = () => setImagenUrl(lector.result);
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_LADO = 800;
+        let { width, height } = img;
+
+        if (width > height && width > MAX_LADO) {
+          height = Math.round((height * MAX_LADO) / width);
+          width = MAX_LADO;
+        } else if (height > MAX_LADO) {
+          width = Math.round((width * MAX_LADO) / height);
+          height = MAX_LADO;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        setImagenUrl(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = lector.result;
+    };
     lector.readAsDataURL(archivo);
   };
 

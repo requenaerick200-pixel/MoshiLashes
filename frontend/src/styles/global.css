@@ -1,0 +1,860 @@
+/* ============================================
+   MoshiLashes — Sistema de diseño
+   Paleta: vino / rosa / crema
+   Tipografía: Fraunces (títulos) + Work Sans (texto) + Space Mono (números)
+   ============================================ */
+
+:root {
+  /* Paleta */
+  --vino: #5c2438;
+  --vino-dark: #3e1826;
+  --vino-soft: rgba(92, 36, 56, 0.08);
+  --rosa: #c9707a;
+  --rosa-light: #e8b4ba;
+  --rosa-pale: #f3d9dc;
+  --crema: #fbf3ee;
+  --crema-dark: #f2e2d8;
+  --texto: #2b1620;
+  --texto-suave: #8c6b72;
+  --exito: #6b8f71;
+  --peligro: #b5474a;
+  --peligro-fondo: #fbe6e3;
+  --blanco: #ffffff;
+
+  /* Tipografía */
+  --fuente-titulo: 'Fraunces', serif;
+  --fuente-texto: 'Work Sans', sans-serif;
+  --fuente-numero: 'Space Mono', monospace;
+
+  /* Layout */
+  --tabbar-alto: 68px;
+  --radio: 14px;
+  --radio-chico: 8px;
+  --sombra: 0 2px 12px rgba(62, 24, 38, 0.08);
+  --sombra-modal: 0 -4px 24px rgba(62, 24, 38, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--crema);
+  color: var(--texto);
+  font-family: var(--fuente-texto);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 600;
+  margin: 0;
+  color: var(--vino-dark);
+}
+
+button {
+  font-family: var(--fuente-texto);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input,
+select {
+  font-family: var(--fuente-texto);
+}
+
+.numero {
+  font-family: var(--fuente-numero);
+}
+
+/* ============================================
+   Layout general de la app
+   ============================================ */
+
+.app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-contenido {
+  flex: 1;
+  padding: 20px 16px calc(var(--tabbar-alto) + 24px);
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.encabezado .marca {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: 1.6rem;
+  color: var(--vino);
+  letter-spacing: 0.02em;
+}
+
+.encabezado .marca span {
+  font-style: normal;
+  color: var(--rosa);
+}
+
+/* ============================================
+   Bottom Tab Bar
+   ============================================ */
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--tabbar-alto);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--blanco);
+  border-top: 1px solid var(--crema-dark);
+  display: flex;
+  z-index: 100;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.tabbar button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.tabbar button.activo {
+  color: var(--vino);
+}
+
+.tabbar .icono {
+  width: 22px;
+  height: 22px;
+}
+
+/* ============================================
+   Botones
+   ============================================ */
+
+.btn {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 13px 20px;
+  border-radius: 999px;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primario {
+  background: var(--vino);
+  color: var(--crema);
+}
+
+.btn-primario:disabled {
+  opacity: 0.5;
+}
+
+.btn-secundario {
+  background: var(--rosa-pale);
+  color: var(--vino-dark);
+}
+
+.btn-fantasma {
+  background: transparent;
+  color: var(--vino);
+  padding: 10px 14px;
+}
+
+.btn-peligro {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+}
+
+.btn-ancho {
+  width: 100%;
+  display: block;
+  text-align: center;
+}
+
+.btn-fab {
+  position: fixed;
+  right: calc((100vw - min(560px, 100vw)) / 2 + 16px);
+  bottom: calc(var(--tabbar-alto) + 20px);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vino);
+  color: var(--crema);
+  font-size: 1.6rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sombra);
+  z-index: 90;
+}
+
+/* ============================================
+   Catálogo — tarjetas de producto
+   ============================================ */
+
+.lista-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--blanco);
+  border: 1px solid var(--crema-dark);
+  border-radius: var(--radio);
+  padding: 10px;
+}
+
+.tarjeta-producto.stock-bajo {
+  border-color: var(--rosa);
+  background: linear-gradient(0deg, var(--crema) 0%, var(--blanco) 100%);
+}
+
+.miniatura {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--crema-dark);
+  border: 2px solid var(--blanco);
+  outline: 1px solid var(--crema-dark);
+  flex-shrink: 0;
+}
+
+.miniatura-vacia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rosa);
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+.info-producto {
+  flex: 1;
+  min-width: 0;
+}
+
+.info-producto .nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-producto .meta-linea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+}
+
+.badge-bajo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--peligro);
+  background: var(--peligro-fondo);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-bajo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--peligro);
+}
+
+.precio-chip {
+  font-family: var(--fuente-numero);
+  font-weight: 700;
+  color: var(--vino);
+  font-size: 0.85rem;
+}
+
+.btn-sumar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--rosa-pale);
+  color: var(--vino);
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarjeta-producto:active .btn-sumar {
+  background: var(--rosa);
+  color: var(--blanco);
+}
+
+/* ============================================
+   Estado vacío
+   ============================================ */
+
+.estado-vacio {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--texto-suave);
+}
+
+.estado-vacio .icono-vacio {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.estado-vacio h3 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.estado-vacio p {
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* ============================================
+   Modales
+   ============================================ */
+
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 22, 32, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 200; /* siempre por encima del tabbar (z-index: 100) */
+  animation: aparecer 0.15s ease;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-hoja {
+  background: var(--crema);
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--sombra-modal);
+  max-height: 88vh;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  animation: subir 0.2s ease;
+}
+
+@keyframes subir {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-agarradera {
+  width: 40px;
+  height: 4px;
+  background: var(--rosa-light);
+  border-radius: 999px;
+  margin: 10px auto 4px;
+  flex-shrink: 0;
+}
+
+.modal-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px 14px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--crema-dark);
+}
+
+.modal-cerrar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--rosa-pale);
+  color: var(--vino-dark);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-cuerpo {
+  padding: 18px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-pie {
+  padding: 14px 20px calc(16px + env(safe-area-inset-bottom, 0));
+  border-top: 1px solid var(--crema-dark);
+  flex-shrink: 0;
+  background: var(--crema);
+}
+
+/* ============================================
+   Formularios
+   ============================================ */
+
+.campo {
+  margin-bottom: 16px;
+}
+
+.campo label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin-bottom: 6px;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--crema-dark);
+  background: var(--blanco);
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: 2px solid var(--rosa);
+  outline-offset: 1px;
+  border-color: var(--rosa);
+}
+
+.campo-error {
+  color: var(--peligro);
+  font-size: 0.78rem;
+  margin-top: 5px;
+}
+
+.subida-foto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.subida-foto .preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--crema-dark);
+  flex-shrink: 0;
+}
+
+.subida-foto .btn-secundario {
+  font-size: 0.82rem;
+  padding: 9px 16px;
+}
+
+/* ============================================
+   Selector de productos en venta
+   ============================================ */
+
+.selector-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.fila-producto-venta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--blanco);
+  border: 1px solid var(--crema-dark);
+  border-radius: var(--radio-chico);
+  padding: 8px 10px;
+}
+
+.fila-producto-venta .nombre {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.fila-producto-venta .sin-stock {
+  color: var(--peligro);
+  font-size: 0.72rem;
+}
+
+.contador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contador button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--rosa-pale);
+  color: var(--vino);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contador button:disabled {
+  opacity: 0.35;
+}
+
+.contador .cantidad {
+  min-width: 18px;
+  text-align: center;
+  font-family: var(--fuente-numero);
+  font-weight: 700;
+}
+
+.resumen-venta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0 4px;
+  font-weight: 600;
+}
+
+.resumen-venta .numero {
+  color: var(--vino);
+  font-size: 1.1rem;
+}
+
+/* ============================================
+   Ventas — resumen del mes ("cinta métrica")
+   ============================================ */
+
+.tarjeta-resumen {
+  background: var(--vino);
+  border-radius: var(--radio);
+  padding: 20px;
+  color: var(--crema);
+  margin-bottom: 18px;
+}
+
+.tarjeta-resumen .etiqueta {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rosa-light);
+  font-weight: 600;
+}
+
+.tarjeta-resumen .total {
+  font-family: var(--fuente-numero);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 4px 0 14px;
+}
+
+.cinta-progreso {
+  position: relative;
+  height: 22px;
+  margin-bottom: 10px;
+}
+
+.cinta-riel {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(251, 243, 238, 0.18);
+  overflow: visible;
+}
+
+.cinta-riel::before {
+  /* marcas tipo cinta métrica cada 10% */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(251, 243, 238, 0.35) 0,
+    rgba(251, 243, 238, 0.35) 1px,
+    transparent 1px,
+    transparent 10%
+  );
+}
+
+.cinta-relleno {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rosa);
+  transition: width 0.4s ease;
+}
+
+.cinta-relleno.superada {
+  background: var(--exito);
+}
+
+.cinta-marca {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--crema);
+  border-radius: 2px;
+}
+
+.mensaje-meta {
+  font-size: 0.86rem;
+  color: var(--crema);
+  opacity: 0.92;
+}
+
+.mensaje-meta strong {
+  font-family: var(--fuente-numero);
+}
+
+.btn-editar-meta {
+  color: var(--rosa-light);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  padding: 4px 0;
+  margin-top: 2px;
+}
+
+/* ============================================
+   Calendario
+   ============================================ */
+
+.selector-mes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.selector-mes .nombre-mes {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  color: var(--vino-dark);
+  text-transform: capitalize;
+}
+
+.selector-mes button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--blanco);
+  border: 1px solid var(--crema-dark);
+  color: var(--vino);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-dias-nombre {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.grid-dias-nombre span {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+}
+
+.grid-calendario {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.celda-dia {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radio-chico);
+  background: var(--blanco);
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  color: var(--texto);
+  position: relative;
+}
+
+.celda-dia.fuera-de-mes {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.celda-dia.con-venta {
+  background: var(--rosa-pale);
+  color: var(--vino-dark);
+  font-weight: 600;
+}
+
+.celda-dia.hoy {
+  border-color: var(--vino);
+}
+
+.celda-dia .punto {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vino);
+  margin-top: 2px;
+}
+
+.btn-registrar-hoy {
+  margin-bottom: 18px;
+}
+
+/* ============================================
+   Detalle del día (dentro del modal)
+   ============================================ */
+
+.items-del-dia {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.item-del-dia {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--blanco);
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--crema-dark);
+  font-size: 0.88rem;
+}
+
+.item-del-dia .cantidad-x {
+  color: var(--texto-suave);
+  margin-right: 6px;
+}
+
+/* ============================================
+   Utilidades
+   ============================================ */
+
+.texto-suave {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.separador {
+  height: 1px;
+  background: var(--crema-dark);
+  margin: 16px 0;
+}
+
+.cargando {
+  text-align: center;
+  padding: 40px;
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+}
+
+.aviso-error {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+.aviso-conexion {
+  background: var(--rosa-pale);
+  color: var(--vino-dark);
+  padding: 10px 14px;
+  border-radius: var(--radio-chico);
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+@media (min-width: 560px) {
+  .btn-fab {
+    right: calc(50vw - 280px + 16px);
+  }
+}

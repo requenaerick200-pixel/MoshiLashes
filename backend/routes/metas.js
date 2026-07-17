@@ -33,13 +33,13 @@ router.put('/', async (req, res) => {
     if (!mes || monto_meta === undefined) {
       return res.status(400).json({ error: 'mes y monto_meta son obligatorios' });
     }
-
+    const mesCompleto = mes.length === 7 ? `${mes}-01` : mes; 
     const result = await pool.query(
       `INSERT INTO metas (mes, monto_meta)
        VALUES ($1, $2)
        ON CONFLICT (mes) DO UPDATE SET monto_meta = EXCLUDED.monto_meta
        RETURNING *`,
-      [mes, monto_meta]
+      [mesCompleto, monto_meta]
     );
 
     res.json(result.rows[0]);

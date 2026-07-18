@@ -33,7 +33,13 @@ router.put('/', async (req, res) => {
     if (!mes || monto_meta === undefined) {
       return res.status(400).json({ error: 'mes y monto_meta son obligatorios' });
     }
-    const mesCompleto = mes.length === 7 ? `${mes}-01` : mes; 
+
+    // El frontend manda el mes como "YYYY-MM" (sin día). La columna es
+    // tipo DATE y necesita un día completo, así que normalizamos aquí
+    // agregando "-01" si hace falta, en vez de depender de que el
+    // frontend siempre mande el formato exacto.
+    const mesCompleto = mes.length === 7 ? `${mes}-01` : mes;
+
     const result = await pool.query(
       `INSERT INTO metas (mes, monto_meta)
        VALUES ($1, $2)

@@ -10,6 +10,65 @@
 import { useState } from 'react';
 import Modal from './Modal';
 
+const MAX_LADO = 800;
+
+// Intenta cargar un archivo/blob como <img> del navegador.
+function cargarComoImagen(blob) {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onerror = () => reject(new Error('No se pudo leer esa foto. Intenta con otra.'));
+    lector.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('FORMATO_NO_SOPORTADO'));
+      img.onload = () => resolve(img);
+      img.src = lector.result;
+    };
+    lector.readAsDataURL(blob);
+  });
+}
+
+// Redimensiona y comprime la imagen ya cargada, y devuelve un data URL JPEG.
+function comprimir(img) {
+  let { width, height } = img;
+  if (width > height && width > MAX_LADO) {
+    height = Math.round((height * MAX_LADO) / width);
+    width = MAX_LADO;
+  } else if (height > MAX_LADO) {
+    width = Math.round((width * MAX_LADO) / height);
+    height = MAX_LADO;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL('image/jpeg', 0.8);
+}
+
+// Procesa cualquier foto que el usuario suba: intenta abrirla directo, y si
+// el navegador no puede (típico de fotos HEIC/HEIF en Chrome/Android),
+// la convierte primero a JPEG con heic2any antes de comprimirla. Solo los
+// formatos RAW/ProRAW (sensor sin procesar) quedan realmente fuera de
+// alcance — ningún navegador puede decodificarlos.
+async function procesarFoto(archivo) {
+  try {
+    const img = await cargarComoImagen(archivo);
+    return comprimir(img);
+  } catch (err) {
+    if (err.message !== 'FORMATO_NO_SOPORTADO') throw err;
+
+    try {
+      const { default: heic2any } = await import('heic2any');
+      const convertido = await heic2any({ blob: archivo, toType: 'image/jpeg', quality: 0.85 });
+      const img = await cargarComoImagen(convertido);
+      return comprimir(img);
+    } catch {
+      throw new Error(
+        'Ese formato de foto no se puede usar (probablemente RAW/ProRAW de iPhone). Ve a Ajustes → Cámara → Formatos en tu iPhone y desactiva "Apple ProRAW", o elige una foto tomada en formato normal.'
+      );
+    }
+  }
+}
+
 export default function ProductFormModal({ productoInicial, onGuardar, onEliminar, onCerrar }) {
   const esEdicion = Boolean(productoInicial);
 
@@ -18,49 +77,30 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
   const [stockInicial, setStockInicial] = useState(productoInicial?.stock_actual ?? '');
   const [stockMinimo, setStockMinimo] = useState(productoInicial?.stock_minimo ?? '');
   const [imagenUrl, setImagenUrl] = useState(productoInicial?.imagen_url || '');
+  const [procesandoFoto, setProcesandoFoto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  const manejarFoto = (e) => {
+  const manejarFoto = async (e) => {
     const archivo = e.target.files?.[0];
     if (!archivo) return;
-
-    // Las fotos de galería del celular pueden pesar varios MB. Las
-    // redimensionamos y comprimimos en el navegador antes de convertirlas
-    // a base64, para que quepan cómodamente en la petición al backend.
-    const lector = new FileReader();
-    lector.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX_LADO = 800;
-        let { width, height } = img;
-
-        if (width > height && width > MAX_LADO) {
-          height = Math.round((height * MAX_LADO) / width);
-          width = MAX_LADO;
-        } else if (height > MAX_LADO) {
-          width = Math.round((width * MAX_LADO) / height);
-          height = MAX_LADO;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        setImagenUrl(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = lector.result;
-    };
-    lector.readAsDataURL(archivo);
+    setError('');
+    setProcesandoFoto(true);
+    try {
+      const dataUrl = await procesarFoto(archivo);
+      setImagenUrl(dataUrl);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcesandoFoto(false);
+    }
   };
 
   const validar = () => {
     if (!nombre.trim()) return 'El nombre es obligatorio';
     if (precio === '' || Number(precio) < 0) return 'Ingresa un precio válido';
-    if (!esEdicion && (stockInicial === '' || Number(stockInicial) < 0))
-      return 'Ingresa un stock inicial válido';
+    if (stockInicial === '' || Number(stockInicial) < 0)
+      return 'Ingresa un stock válido';
     return '';
   };
 
@@ -76,7 +116,7 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
       await onGuardar({
         nombre: nombre.trim(),
         precio: Number(precio),
-        stock_actual: esEdicion ? undefined : Number(stockInicial),
+        stock_actual: Number(stockInicial),
         stock_minimo: stockMinimo === '' ? null : Number(stockMinimo),
         imagen_url: imagenUrl || null,
       });
@@ -117,9 +157,15 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
             <span className="icono-camara-vacio">📷</span>
           )}
         </div>
-        <label className="btn btn-secundario">
-          {imagenUrl ? 'Cambiar foto' : 'Agregar foto'}
-          <input type="file" accept="image/*" onChange={manejarFoto} style={{ display: 'none' }} />
+        <label className={`btn btn-secundario ${procesandoFoto ? 'btn-primario' : ''}`} style={{ opacity: procesandoFoto ? 0.7 : 1 }}>
+          {procesandoFoto ? 'Procesando foto…' : imagenUrl ? 'Cambiar foto' : 'Agregar foto'}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={manejarFoto}
+            disabled={procesandoFoto}
+            style={{ display: 'none' }}
+          />
         </label>
       </div>
 
@@ -146,19 +192,17 @@ export default function ProductFormModal({ productoInicial, onGuardar, onElimina
         />
       </div>
 
-      {!esEdicion && (
-        <div className="campo">
-          <label>Stock inicial</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            value={stockInicial}
-            onChange={(e) => setStockInicial(e.target.value)}
-            placeholder="0"
-          />
-        </div>
-      )}
+      <div className="campo">
+        <label>{esEdicion ? 'Stock actual (corrige si te equivocaste)' : 'Stock inicial'}</label>
+        <input
+          type="number"
+          inputMode="numeric"
+          min="0"
+          value={stockInicial}
+          onChange={(e) => setStockInicial(e.target.value)}
+          placeholder="0"
+        />
+      </div>
 
       <div className="campo">
         <label>Alerta de stock mínimo (opcional)</label>

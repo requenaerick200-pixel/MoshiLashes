@@ -183,8 +183,62 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE /api/ventas/items/:id
+// Elimina UN producto específico dentro de una venta (por si te
+// equivocaste al agregar un producto, pero el resto de la venta está
+// bien). Devuelve el stock de ese producto y, si era el único item de
+// la venta, borra también la venta vacía.
+router.delete('/items/:id', async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const itemResult = await client.query(
+      'SELECT venta_id, producto_id, cantidad FROM venta_items WHERE id = $1',
+      [id]
+    );
+
+    if (itemResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Producto de la venta no encontrado' });
+    }
+
+    const { venta_id, producto_id, cantidad } = itemResult.rows[0];
+
+    // Devolver el stock de este producto
+    await client.query(
+      'UPDATE productos SET stock_actual = stock_actual + $1 WHERE id = $2',
+      [cantidad, producto_id]
+    );
+
+    await client.query('DELETE FROM venta_items WHERE id = $1', [id]);
+
+    // Si esa venta se quedó sin ningún producto, la borramos también
+    // (para no dejar un día "vacío" registrado en el calendario)
+    const restantes = await client.query(
+      'SELECT COUNT(*) FROM venta_items WHERE venta_id = $1',
+      [venta_id]
+    );
+    if (parseInt(restantes.rows[0].count, 10) === 0) {
+      await client.query('DELETE FROM ventas WHERE id = $1', [venta_id]);
+    }
+
+    await client.query('COMMIT');
+    res.json({ mensaje: 'Producto eliminado de la venta y stock restituido' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar el producto de la venta' });
+  } finally {
+    client.release();
+  }
+});
+
 // DELETE /api/ventas/:id
-// Elimina una venta y devuelve el stock a los productos (por si se registró mal)
+// Elimina una venta completa y devuelve el stock a los productos (por si
+// se registró mal desde el inicio)
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();

@@ -102,6 +102,11 @@ export default function VentasTab() {
     await cargarMes();
   };
 
+  const eliminarItemVenta = async (itemId) => {
+    await api.eliminarItemVenta(itemId);
+    await cargarMes();
+  };
+
   const guardarMeta = async (monto_meta) => {
     await api.guardarMeta(mesActualISO, monto_meta);
     setModalMeta(false);
@@ -195,7 +200,7 @@ export default function VentasTab() {
           ventasDelDia={ventasDelDiaSeleccionado}
           productos={productos}
           onRegistrar={registrarVenta}
-          onEliminarVenta={eliminarVenta}
+          onEliminarItem={eliminarItemVenta}
           onCerrar={() => setDiaSeleccionado(null)}
         />
       )}

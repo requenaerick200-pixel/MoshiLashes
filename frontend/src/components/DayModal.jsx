@@ -13,7 +13,7 @@ function formatearFechaLarga(fechaISO) {
   return fecha.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export default function DayModal({ fechaISO, ventasDelDia, productos, onRegistrar, onEliminarVenta, onCerrar }) {
+export default function DayModal({ fechaISO, ventasDelDia, productos, onRegistrar, onEliminarItem, onCerrar }) {
   const [seleccion, setSeleccion] = useState({}); // { producto_id: cantidad }
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +58,15 @@ export default function DayModal({ fechaISO, ventasDelDia, productos, onRegistra
     }
   };
 
+  const eliminarItem = async (itemId) => {
+    if (!confirm('¿Eliminar este producto de la venta? El stock se restaurará.')) return;
+    try {
+      await onEliminarItem(itemId);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   return (
     <Modal
       titulo={formatearFechaLarga(fechaISO)}
@@ -76,23 +85,32 @@ export default function DayModal({ fechaISO, ventasDelDia, productos, onRegistra
           <div className="items-del-dia">
             {ventasDelDia.flatMap((venta) =>
               venta.items.map((it) => (
-                <div key={it.id} className="item-del-dia">
-                  <span>
+                <div key={it.id} className="item-del-dia" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ flex: 1 }}>
                     <span className="cantidad-x numero">{it.cantidad}×</span>
                     {it.nombre}
                   </span>
                   <span className="numero">S/ {(it.cantidad * it.precio_unitario).toFixed(2)}</span>
+                  <button
+                    onClick={() => eliminarItem(it.id)}
+                    aria-label={`Eliminar ${it.nombre}`}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--vino)',
+                      fontSize: '1.1rem',
+                      lineHeight: 1,
+                      padding: '2px 6px',
+                      cursor: 'pointer',
+                      opacity: 0.6,
+                    }}
+                  >
+                    ×
+                  </button>
                 </div>
               ))
             )}
           </div>
-          <button
-            className="btn-fantasma"
-            style={{ fontSize: '0.78rem', marginBottom: 12 }}
-            onClick={() => onEliminarVenta(ventasDelDia[ventasDelDia.length - 1].id)}
-          >
-            Deshacer último registro de este día
-          </button>
           <div className="separador" />
         </>
       )}

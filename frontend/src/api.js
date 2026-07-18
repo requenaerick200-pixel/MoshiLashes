@@ -44,6 +44,7 @@ export const api = {
   registrarVenta: (venta) =>
     solicitar('/ventas', { method: 'POST', body: JSON.stringify(venta) }),
   eliminarVenta: (id) => solicitar(`/ventas/${id}`, { method: 'DELETE' }),
+  eliminarItemVenta: (itemId) => solicitar(`/ventas/items/${itemId}`, { method: 'DELETE' }),
 
   // Metas
   obtenerMeta: (mes) => solicitar(`/metas/${mes}`),

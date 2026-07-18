@@ -710,6 +710,34 @@ select {
   margin-top: 2px;
 }
 
+.tarjetas-metricas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.tarjeta-metrica {
+  background: var(--blanco);
+  border: 1px solid var(--crema-dark);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.etiqueta-metrica {
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.valor-metrica {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--vino);
+}
+
 /* ============================================
    Calendario
    ============================================ */

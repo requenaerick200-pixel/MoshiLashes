@@ -40,7 +40,7 @@ export const api = {
 
   // Ventas
   listarVentas: (mes) => solicitar(`/ventas?mes=${mes}`),
-  resumenMes: (mes) => solicitar(`/ventas/resumen-mes?mes=${mes}`),
+  resumenMes: (mes, hoy) => solicitar(`/ventas/resumen-mes?mes=${mes}${hoy ? `&hoy=${hoy}` : ''}`),
   registrarVenta: (venta) =>
     solicitar('/ventas', { method: 'POST', body: JSON.stringify(venta) }),
   eliminarVenta: (id) => solicitar(`/ventas/${id}`, { method: 'DELETE' }),

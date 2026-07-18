@@ -43,17 +43,20 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/ventas/resumen-mes?mes=2026-07
-// Total vendido en el mes + comparación contra la meta
+// GET /api/ventas/resumen-mes?mes=2026-07&hoy=2026-07-18
+// Total vendido en el mes + comparación contra la meta + total de
+// productos vendidos en el mes + total vendido hoy (si se manda "hoy")
 router.get('/resumen-mes', async (req, res) => {
   try {
-    const { mes } = req.query;
+    const { mes, hoy } = req.query;
     if (!mes) {
       return res.status(400).json({ error: 'El parámetro "mes" es obligatorio (formato YYYY-MM)' });
     }
 
     const totalResult = await pool.query(
-      `SELECT COALESCE(SUM(vi.cantidad * vi.precio_unitario), 0) AS total_vendido
+      `SELECT
+         COALESCE(SUM(vi.cantidad * vi.precio_unitario), 0) AS total_vendido,
+         COALESCE(SUM(vi.cantidad), 0) AS total_productos
        FROM ventas v
        JOIN venta_items vi ON vi.venta_id = v.id
        WHERE to_char(v.fecha, 'YYYY-MM') = $1`,
@@ -65,13 +68,28 @@ router.get('/resumen-mes', async (req, res) => {
       [mes]
     );
 
+    let vendidoHoy = 0;
+    if (hoy) {
+      const hoyResult = await pool.query(
+        `SELECT COALESCE(SUM(vi.cantidad * vi.precio_unitario), 0) AS vendido_hoy
+         FROM ventas v
+         JOIN venta_items vi ON vi.venta_id = v.id
+         WHERE v.fecha = $1`,
+        [hoy]
+      );
+      vendidoHoy = parseFloat(hoyResult.rows[0].vendido_hoy);
+    }
+
     const totalVendido = parseFloat(totalResult.rows[0].total_vendido);
+    const totalProductos = parseInt(totalResult.rows[0].total_productos, 10);
     const montoMeta = metaResult.rows.length > 0 ? parseFloat(metaResult.rows[0].monto_meta) : 0;
     const diferencia = totalVendido - montoMeta;
 
     res.json({
       mes,
       total_vendido: totalVendido,
+      total_productos: totalProductos,
+      vendido_hoy: vendidoHoy,
       monto_meta: montoMeta,
       diferencia, // positivo = meta superada, negativo = falta ese monto
       meta_superada: diferencia >= 0,

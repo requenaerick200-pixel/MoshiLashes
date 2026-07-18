@@ -43,7 +43,7 @@ export default function VentasTab() {
     try {
       const [ventasData, resumenData, productosData] = await Promise.all([
         api.listarVentas(mesActualISO),
-        api.resumenMes(mesActualISO),
+        api.resumenMes(mesActualISO, hoyISO()),
         api.listarProductos(),
       ]);
       setVentas(ventasData);
@@ -173,6 +173,17 @@ export default function VentasTab() {
                 Fijar una meta para este mes
               </button>
             )}
+          </div>
+
+          <div className="tarjetas-metricas">
+            <div className="tarjeta-metrica">
+              <div className="etiqueta-metrica">Vendido hoy</div>
+              <div className="valor-metrica numero">S/ {Number(resumen?.vendido_hoy || 0).toFixed(2)}</div>
+            </div>
+            <div className="tarjeta-metrica">
+              <div className="etiqueta-metrica">Productos vendidos</div>
+              <div className="valor-metrica numero">{resumen?.total_productos || 0}</div>
+            </div>
           </div>
 
           <div className="selector-mes">

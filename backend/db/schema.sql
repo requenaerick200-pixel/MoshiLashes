@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS productos (
     stock_actual INTEGER NOT NULL DEFAULT 0 CHECK (stock_actual >= 0),
     stock_minimo INTEGER,
     imagen_url TEXT,
+    activo BOOLEAN NOT NULL DEFAULT true,
     creado_en TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

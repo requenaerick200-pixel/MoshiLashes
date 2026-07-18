@@ -10,7 +10,7 @@ const pool = require('../db/pool');
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM productos ORDER BY nombre ASC'
+      'SELECT * FROM productos WHERE activo = true ORDER BY nombre ASC'
     );
     res.json(result.rows);
   } catch (err) {
@@ -98,17 +98,18 @@ router.put('/:id/reabastecer', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, precio, stock_minimo, imagen_url } = req.body;
+    const { nombre, precio, stock_actual, stock_minimo, imagen_url } = req.body;
 
     const result = await pool.query(
       `UPDATE productos
        SET nombre = COALESCE($1, nombre),
            precio = COALESCE($2, precio),
-           stock_minimo = COALESCE($3, stock_minimo),
-           imagen_url = COALESCE($4, imagen_url)
-       WHERE id = $5
+           stock_actual = COALESCE($3, stock_actual),
+           stock_minimo = COALESCE($4, stock_minimo),
+           imagen_url = COALESCE($5, imagen_url)
+       WHERE id = $6
        RETURNING *`,
-      [nombre, precio, stock_minimo, imagen_url, id]
+      [nombre, precio, stock_actual, stock_minimo, imagen_url, id]
     );
 
     if (result.rows.length === 0) {
@@ -123,7 +124,10 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/productos/:id
-// Elimina un producto del catálogo
+// Elimina un producto del catálogo. Si el producto ya tiene ventas
+// registradas, no se puede borrar de verdad sin perder ese historial —
+// en ese caso lo "archivamos" (activo = false) en vez de borrarlo, y deja
+// de aparecer en el catálogo pero sus ventas pasadas siguen intactas.
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -134,16 +138,31 @@ router.delete('/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    res.json({ mensaje: 'Producto eliminado', producto: result.rows[0] });
+    res.json({ mensaje: 'Producto eliminado', producto: result.rows[0], archivado: false });
   } catch (err) {
-    console.error(err);
     // Si el producto ya tiene ventas asociadas, la FK con ON DELETE RESTRICT
-    // va a impedir el borrado. Avisamos con un mensaje claro.
-    if (err.code === '23503') {
-      return res.status(409).json({
-        error: 'No se puede eliminar: este producto ya tiene ventas registradas',
-      });
+    // impide el borrado (código 23001). En ese caso lo archivamos en vez
+    // de fallar, para no perder el historial de ventas.
+    if (err.code === '23001' || err.code === '23503') {
+      try {
+        const archivado = await pool.query(
+          'UPDATE productos SET activo = false WHERE id = $1 RETURNING *',
+          [req.params.id]
+        );
+        if (archivado.rows.length === 0) {
+          return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        return res.json({
+          mensaje: 'Este producto ya tiene ventas registradas, así que se archivó en vez de eliminarse (para no perder tu historial de ventas)',
+          producto: archivado.rows[0],
+          archivado: true,
+        });
+      } catch (err2) {
+        console.error(err2);
+        return res.status(500).json({ error: 'Error al archivar el producto' });
+      }
     }
+    console.error(err);
     res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 });

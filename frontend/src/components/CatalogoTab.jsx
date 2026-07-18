@@ -43,9 +43,12 @@ export default function CatalogoTab() {
   const eliminarProducto = async (producto) => {
     if (!confirm(`¿Eliminar "${producto.nombre}" del catálogo?`)) return;
     try {
-      await api.eliminarProducto(producto.id);
+      const resultado = await api.eliminarProducto(producto.id);
       setModalFormulario(null);
       await cargarProductos();
+      if (resultado?.archivado) {
+        alert(resultado.mensaje);
+      }
     } catch (e) {
       alert(e.message);
     }

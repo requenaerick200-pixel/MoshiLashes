@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS productos (
     stock_actual INTEGER NOT NULL DEFAULT 0 CHECK (stock_actual >= 0),
     stock_minimo INTEGER,
     imagen_url TEXT,
+    categoria VARCHAR(60),
     activo BOOLEAN NOT NULL DEFAULT true,
     creado_en TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -38,7 +39,22 @@ CREATE TABLE IF NOT EXISTS metas (
     monto_meta DECIMAL(10, 2) NOT NULL CHECK (monto_meta >= 0)
 );
 
+-- Tabla: movimientos_stock (historial / kardex de inventario)
+-- Cada vez que el stock cambia (alta, reabastecimiento, salida por merma,
+-- ajuste manual, venta o devolución) se guarda una fila aquí.
+CREATE TABLE IF NOT EXISTS movimientos_stock (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    tipo VARCHAR(20) NOT NULL
+      CHECK (tipo IN ('alta', 'entrada', 'salida', 'ajuste', 'venta', 'devolucion')),
+    cantidad INTEGER NOT NULL,          -- con signo: +entra / -sale
+    stock_resultante INTEGER NOT NULL,  -- stock después del movimiento
+    motivo TEXT,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Índices útiles para las consultas más frecuentes
 CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(fecha);
 CREATE INDEX IF NOT EXISTS idx_venta_items_venta_id ON venta_items(venta_id);
 CREATE INDEX IF NOT EXISTS idx_venta_items_producto_id ON venta_items(producto_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_producto ON movimientos_stock(producto_id, creado_en DESC);

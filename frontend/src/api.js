@@ -31,11 +31,20 @@ export const api = {
     solicitar('/productos', { method: 'POST', body: JSON.stringify(producto) }),
   editarProducto: (id, cambios) =>
     solicitar(`/productos/${id}`, { method: 'PUT', body: JSON.stringify(cambios) }),
-  reabastecerProducto: (id, cantidad_recibida) =>
+  crearProductosLote: (productos) =>
+    solicitar('/productos/lote', { method: 'POST', body: JSON.stringify({ productos }) }),
+  reabastecerProducto: (id, cantidad_recibida, motivo) =>
     solicitar(`/productos/${id}/reabastecer`, {
       method: 'PUT',
-      body: JSON.stringify({ cantidad_recibida }),
+      body: JSON.stringify({ cantidad_recibida, motivo }),
     }),
+  registrarSalida: (id, cantidad, motivo) =>
+    solicitar(`/productos/${id}/salida`, { method: 'POST', body: JSON.stringify({ cantidad, motivo }) }),
+  recibirMercaderia: (items, motivo) =>
+    solicitar('/productos/recepcion', { method: 'POST', body: JSON.stringify({ items, motivo }) }),
+  historialProducto: (id) => solicitar(`/productos/${id}/movimientos`),
+  listarArchivados: () => solicitar('/productos/archivados'),
+  restaurarProducto: (id) => solicitar(`/productos/${id}/restaurar`, { method: 'PUT' }),
   eliminarProducto: (id) => solicitar(`/productos/${id}`, { method: 'DELETE' }),
 
   // Ventas

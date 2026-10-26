@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
+const { registrarMovimiento } = require('../db/movimientos');
 
 // GET /api/ventas?mes=2026-07
 // Lista las ventas de un mes (para pintar el calendario), con sus items
@@ -179,10 +180,17 @@ router.post('/', async (req, res) => {
       );
       itemsCreados.push(itemResult.rows[0]);
 
-      await client.query(
-        'UPDATE productos SET stock_actual = stock_actual - $1 WHERE id = $2',
+      const stockResult = await client.query(
+        'UPDATE productos SET stock_actual = stock_actual - $1 WHERE id = $2 RETURNING stock_actual',
         [item.cantidad, item.producto_id]
       );
+      await registrarMovimiento(client, {
+        producto_id: item.producto_id,
+        tipo: 'venta',
+        cantidad: -item.cantidad,
+        stock_resultante: stockResult.rows[0].stock_actual,
+        motivo: `Venta del ${fecha}`,
+      });
     }
 
     await client.query('COMMIT');
@@ -226,10 +234,17 @@ router.delete('/items/:id', async (req, res) => {
     const { venta_id, producto_id, cantidad } = itemResult.rows[0];
 
     // Devolver el stock de este producto
-    await client.query(
-      'UPDATE productos SET stock_actual = stock_actual + $1 WHERE id = $2',
+    const stockResult = await client.query(
+      'UPDATE productos SET stock_actual = stock_actual + $1 WHERE id = $2 RETURNING stock_actual',
       [cantidad, producto_id]
     );
+    await registrarMovimiento(client, {
+      producto_id,
+      tipo: 'devolucion',
+      cantidad,
+      stock_resultante: stockResult.rows[0].stock_actual,
+      motivo: 'Se quitó de una venta',
+    });
 
     await client.query('DELETE FROM venta_items WHERE id = $1', [id]);
 
@@ -276,10 +291,17 @@ router.delete('/:id', async (req, res) => {
 
     // Devolver stock
     for (const item of itemsResult.rows) {
-      await client.query(
-        'UPDATE productos SET stock_actual = stock_actual + $1 WHERE id = $2',
+      const stockResult = await client.query(
+        'UPDATE productos SET stock_actual = stock_actual + $1 WHERE id = $2 RETURNING stock_actual',
         [item.cantidad, item.producto_id]
       );
+      await registrarMovimiento(client, {
+        producto_id: item.producto_id,
+        tipo: 'devolucion',
+        cantidad: item.cantidad,
+        stock_resultante: stockResult.rows[0].stock_actual,
+        motivo: 'Venta eliminada',
+      });
     }
 
     // ON DELETE CASCADE en venta_items se encarga de borrar los items

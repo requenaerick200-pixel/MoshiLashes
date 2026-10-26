@@ -10,6 +10,8 @@ const productosRoutes = require('./routes/productos');
 const ventasRoutes = require('./routes/ventas');
 const metasRoutes = require('./routes/metas');
 
+const migrar = require('./db/migrate');
+
 const app = express();
 
 app.use(cors());
@@ -31,6 +33,13 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor MoshiLashes escuchando en http://localhost:${PORT}`);
-});
+// Primero aplicamos migraciones (crea columnas/tablas nuevas si faltan) y
+// luego levantamos el servidor. Si la migración falla, igual arrancamos
+// para no tumbar la app, pero queda el error en consola.
+migrar()
+  .catch((err) => console.error('❌ Error aplicando migraciones:', err.message))
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor MoshiLashes escuchando en http://localhost:${PORT}`);
+    });
+  });
